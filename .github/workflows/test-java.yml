@@ -1,0 +1,33 @@
+name: Corrección Automática Java
+
+on:
+  push:
+    paths:
+      - '**.java'
+      - 'pom.xml'
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Clonar el repositorio
+      uses: actions/checkout@v3
+
+    - name: Configurar Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Ejecutar tests con Maven
+      run: mvn test
+
+    - name: Subir resultados de los tests (opcional)
+      uses: actions/upload-artifact@v3
+      with:
+        name: resultados-de-tests
+        path: target/surefire-reports/
+
+
