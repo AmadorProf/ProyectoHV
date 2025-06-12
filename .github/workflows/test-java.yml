@@ -1,33 +1,46 @@
-name: Corrección Automática Java
+name: Java CI with Maven
 
-on:
+on: 
   push:
-    paths:
-      - '**.java'
-      - 'pom.xml'
+    branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
 
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Clonar el repositorio
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Configurar Java
-      uses: actions/setup-java@v4
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
       with:
-        distribution: 'temurin'
         java-version: '17'
+        distribution: 'temurin'
+        cache: 'maven'
 
-    - name: Ejecutar tests con Maven
-      run: mvn test
-
-    - name: Subir resultados de los tests (opcional)
-      uses: actions/upload-artifact@v3
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
       with:
-        name: resultados-de-tests
-        path: target/surefire-reports/
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-m2-
 
+    - name: Build with Maven
+      run: mvn -B compile
 
+    - name: Run tests
+      run: mvn -B test
+
+    - name: Verify code format (opcional)
+      run: mvn -B spotless:check
+
+    - name: Upload test reports (opcional)
+      uses: actions/upload-artifact@v3
+      if: ${{ always() }}
+      with:
+        name: test-reports
+        path: target/surefire-reports
